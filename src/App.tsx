@@ -14,8 +14,7 @@ const binImages: Record<BinId, { awake: string; sleepy: string }> = {
   maybe: { awake: maybeImg, sleepy: maybeSleepyImg },
 };
 
-// User: paste your real APK link here when you have one.
-const DOWNLOAD_URL = '#download';
+const DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=1bkf6H6lixfEtbdwpCKNFiPp_f86sOhhD';
 const CONTACT_EMAIL = 'sunziyuan000@gmail.com';
 
 export default function App() {
