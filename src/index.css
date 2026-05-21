@@ -439,8 +439,21 @@ a { color: inherit; }
 
 /* ---------- Closing CTA ---------- */
 .closing {
-  text-align: center;
   padding: 64px 16px 32px;
+}
+
+.closing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.closing-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .closing-title {
@@ -459,12 +472,13 @@ a { color: inherit; }
 
 .download-btn {
   display: inline-block;
-  padding: 16px 40px;
+  padding: 10px 28px;
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--cream);
+  color: var(--ink);
+  border: 2px solid var(--tan);
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   text-decoration: none;
   box-shadow: var(--shadow-md);
   transition: transform 160ms ease, box-shadow 160ms ease;
@@ -530,5 +544,5 @@ a { color: inherit; }
   .bin-img-wrap img { max-height: 110px; }
   .teach-grid { grid-template-columns: 1fr; }
   .swipe-legend { flex-direction: column; gap: 6px; }
-  .download-btn { padding: 14px 28px; font-size: 1rem; }
+  .download-btn { padding: 8px 22px; font-size: 0.85rem; }
 }

@@ -178,12 +178,15 @@ function TeachSection() {
 function ClosingCTA() {
   return (
     <section className="closing">
-      <h2 className="closing-title">Your truly intelligent Gmail assistant.</h2>
-      <p className="closing-tag">Try now — your morning anxiety will thank you.</p>
-      <a href={DOWNLOAD_URL} className="download-btn">
-        Download APK ↓
-      </a>
-      <p className="closing-fineprint">Android only for now. iOS folks, hold tight.</p>
+      <div className="closing-row">
+        <div>
+          <div className="footer-line">Want testing access? Email me.</div>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="footer-email">{CONTACT_EMAIL}</a>
+        </div>
+        <div className="closing-right">
+          <a href={DOWNLOAD_URL} className="download-btn">Download APK ↓</a>
+        </div>
+      </div>
     </section>
   );
 }
@@ -192,10 +195,6 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="footer-inner">
-        <div>
-          <div className="footer-line">Want testing access? Email me.</div>
-          <a href={`mailto:${CONTACT_EMAIL}`} className="footer-email">{CONTACT_EMAIL}</a>
-        </div>
         <div className="footer-credit">
           Made with beige &amp; caffeine · {new Date().getFullYear()}
         </div>
