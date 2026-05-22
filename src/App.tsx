@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import emergencyImg from './assets/emergency.png';
 import emergencySleepyImg from './assets/emergency-sleepy.png';
 import infoImg from './assets/info-bin.png';
@@ -71,41 +72,105 @@ function BinCard({ binId, title, pitch, longer }: { binId: BinId; title: string;
   );
 }
 
+const SWIPE_THRESHOLD = 140;
+
 function SwipeDemoSection() {
   const [emails, setEmails] = useState<FakeEmail[]>(fakeEmails);
   const [swiped, setSwiped] = useState<{ id: string; dir: 'right' | 'left' } | null>(null);
-  const startX = useRef<number | null>(null);
+
+  const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
+  const swipeLocked = useRef(false);
+  const activeId = useRef<string | null>(null);
+  const cardEls = useRef<Map<string, HTMLDivElement>>(new Map());
 
   function handleSwipe(id: string, dir: 'right' | 'left') {
     setSwiped({ id, dir });
     setTimeout(() => {
       setEmails((prev) => prev.filter((e) => e.id !== id));
       setSwiped(null);
-    }, 280);
+    }, 320);
   }
 
   function reset() {
     setEmails(fakeEmails);
   }
 
-  function onTouchStart(e: React.TouchEvent) {
-    startX.current = e.touches[0].clientX;
+  function setRevealColor(card: HTMLElement | null, color: string | null) {
+    const reveal = card?.parentElement?.querySelector('.swipe-reveal') as HTMLElement | null;
+    if (reveal) reveal.style.background = color ?? '';
   }
-  function onTouchEnd(e: React.TouchEvent, id: string) {
-    if (startX.current === null) return;
-    const dx = e.changedTouches[0].clientX - startX.current;
-    if (Math.abs(dx) > 60) handleSwipe(id, dx > 0 ? 'right' : 'left');
-    startX.current = null;
+
+  function resetCard(card: HTMLElement | null) {
+    if (!card) return;
+    card.style.transition = 'transform 260ms ease';
+    card.style.transform = '';
+  }
+
+  function onPointerDown(e: ReactPointerEvent<HTMLDivElement>, id: string) {
+    if (activeId.current) return;
+    const card = e.currentTarget;
+    card.style.transition = 'none';
+    activeId.current = id;
+    swipeLocked.current = false;
+    cardEls.current.set(id, card);
+    dragStartX.current = e.clientX;
+    dragStartY.current = e.clientY;
+  }
+
+  function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    const id = activeId.current;
+    if (!id) return;
+    const card = cardEls.current.get(id);
+    if (!card) return;
+    const dx = e.clientX - dragStartX.current;
+    const dy = e.clientY - dragStartY.current;
+
+    if (!swipeLocked.current) {
+      if (Math.abs(dy) > Math.abs(dx) + 4) {
+        activeId.current = null;
+        card.style.transition = '';
+        return;
+      }
+      if (Math.abs(dx) > 8) {
+        swipeLocked.current = true;
+        card.setPointerCapture(e.pointerId);
+      } else {
+        return;
+      }
+    }
+
+    card.style.transform = `translateX(${dx}px) rotate(${dx * 0.03}deg)`;
+    const progress = Math.min(Math.abs(dx) / SWIPE_THRESHOLD, 1);
+    if (dx > 0) setRevealColor(card, `rgba(139, 115, 85, ${progress})`);
+    else if (dx < 0) setRevealColor(card, `rgba(192, 57, 43, ${progress})`);
+    else setRevealColor(card, null);
+  }
+
+  function onPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
+    const id = activeId.current;
+    if (!id) return;
+    const dx = e.clientX - dragStartX.current;
+    const card = cardEls.current.get(id);
+    cardEls.current.delete(id);
+    activeId.current = null;
+
+    if (Math.abs(dx) > SWIPE_THRESHOLD) {
+      handleSwipe(id, dx > 0 ? 'right' : 'left');
+    } else {
+      resetCard(card ?? null);
+      setRevealColor(card ?? null, null);
+    }
   }
 
   return (
     <section className="swipe-section">
       <h2 className="swipe-title">Only 2 minutes for 50 emails?</h2>
-      <p className="swipe-sub">No problem — just swipe.</p>
+      <p className="swipe-sub">No problem — just drag.</p>
 
       <div className="swipe-legend">
-        <span><span className="swipe-pill right">swipe right →</span> bin it, you're done</span>
-        <span><span className="swipe-pill left">← swipe left</span> tell us why it should go elsewhere</span>
+        <span><span className="swipe-pill right">drag right →</span> bin it, you're done</span>
+        <span><span className="swipe-pill left">← drag left</span> tell us why it should go elsewhere</span>
       </div>
 
       <div className="swipe-stage">
@@ -120,22 +185,24 @@ function SwipeDemoSection() {
         ) : (
           <ul className="swipe-list">
             {emails.map((e) => (
-              <li key={e.id}
+              <li
+                key={e.id}
                 className={`mail-card-wrap ${swiped?.id === e.id ? `is-swiped-${swiped.dir}` : ''}`}
-                onTouchStart={onTouchStart}
-                onTouchEnd={(ev) => onTouchEnd(ev, e.id)}
               >
-                <div className={`mail-card bin-${e.bin}`}>
+                <div className="swipe-reveal" />
+                <div
+                  className={`mail-card bin-${e.bin}`}
+                  onPointerDown={(ev) => onPointerDown(ev, e.id)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerUp}
+                >
                   <div className="mail-card-head">
                     <span className="mail-theme">{e.theme}</span>
                     <span className="mail-time">{e.time}</span>
                   </div>
                   <div className="mail-from">{e.fromWho}</div>
                   <p className="mail-summary">{e.summary}</p>
-                </div>
-                <div className="swipe-actions">
-                  <button className="swipe-btn left" onClick={() => handleSwipe(e.id, 'left')} aria-label="Teach">←</button>
-                  <button className="swipe-btn right" onClick={() => handleSwipe(e.id, 'right')} aria-label="Done">→</button>
                 </div>
               </li>
             ))}
